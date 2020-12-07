@@ -16,8 +16,7 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass=ProfilRepository::class)
- * @ApiFilter(BooleanFilter::class, properties={"IsDeleted"})
- * 
+ * @ApiFilter(BooleanFilter::class, properties={"isDeleted"})
  *  @ApiResource(
  *     normalizationContext={"groups"={"profil:read"}},
  *     routePrefix="/admin",
@@ -87,6 +86,7 @@ class Profil
 
     /**
      * @ORM\Column(type="boolean", nullable=true)
+     * @Groups("profil:read")
      */
     protected $isDeleted = false;
 
@@ -155,3 +155,4 @@ class Profil
         return $this;
     }
 }
+

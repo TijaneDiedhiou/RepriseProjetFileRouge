@@ -46,10 +46,7 @@ class UserController extends AbstractController
         $manager ->flush();
         return $this->json($user,Response::HTTP_CREATED);
 
-    }
-
-     
-            
+    } 
     
 
 }

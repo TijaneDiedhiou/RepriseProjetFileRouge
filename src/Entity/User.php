@@ -2,9 +2,10 @@
 
 namespace App\Entity;
 
-use Symfony\Component\Validator\Constraints as Assert;
-
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+
 use Doctrine\ORM\Mapping\Entity;
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping\InheritanceType;
@@ -14,15 +15,17 @@ use ApiPlatform\Core\Annotation\ApiResource;
 use Doctrine\ORM\Mapping\DiscriminatorColumn;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Security\Core\User\UserInterface;
 use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\BooleanFilter;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 /**
  * @ORM\Entity(repositoryClass=UserRepository::class)
  * @ORM\InheritanceType("SINGLE_TABLE")
  * @DiscriminatorColumn(name="dtype", type="string")
  * @DiscriminatorMap({"admin" = "Admin", "formateur" = "Formateur", "apprenant" = "Apprenant", "cm" = "Cm", "user"="User"})
- * @ApiFilter(BooleanFilter::class, properties={"IsDeleted"})
+ * @ApiFilter(BooleanFilter::class,properties={"isDeleted"})
  * @ApiResource(
  *     attributes={"deserialize"=false},
  *     normalizationContext={"groups"={"user:read"}},
@@ -54,9 +57,13 @@ use ApiPlatform\Core\Bridge\Doctrine\Orm\Filter\BooleanFilter;
  *                 "path"="/users/{id}",
  *                 "security"="is_granted('ROLE_ADMIN')",
  *                 "security_message"= "Vous n'avez pas acces à cette ressource",
- *         }
+ *         },
+ *      "DELETE"
  * }
  * )
+ * @UniqueEntity(
+ *      fields={"email"},
+ *      message="Ce email existe déjà")
  */
 class User implements UserInterface
 {
@@ -64,13 +71,16 @@ class User implements UserInterface
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups("user:read")
+     * 
      */
     protected $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
-     *  @Groups("user:read")
+     * @Groups("user:read")
      * @Assert\NotBlank(message="Veuillez renseigné l'email ")
+     * @Groups("POSTgroupe:read")
      * 
      * 
      */
@@ -91,6 +101,7 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=255)
      *  @Groups("user:read")
      * @Assert\NotBlank(message="Veuillez renseigné le nom ")
+     * @Groups("POSTgroupe:read")
      * 
      */
     protected $nom;
@@ -99,26 +110,41 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=255)
      *  @Groups("user:read")
      * @Assert\NotBlank(message="Veuillez renseigné le prenom ")
+     * @Groups("POSTgroupe:read")
      * 
      */
 
     protected $prenom;
 
     /**
+     *  @Groups("user:read")
      * @ORM\ManyToOne(targetEntity=Profil::class, inversedBy="user")
-     * 
+     *
      */
     protected $profil;
 
     /**
      * @ORM\Column(type="blob", nullable=true)
+     *  @Groups( {"user:read"})
+     * 
      */
     protected $avatar;
 
     /**
      * @ORM\Column(type="boolean", nullable=true)
+     *  @Groups("user:read")
      */
     protected $isDeleted = false;
+
+    /**
+     * @ORM\ManyToMany(targetEntity=Promos::class, mappedBy="user")
+     */
+    private $promos;
+
+    public function __construct()
+    {
+        $this->promos = new ArrayCollection();
+    }
 
 
     public function getId(): ?int
@@ -239,10 +265,18 @@ class User implements UserInterface
    
     public function getAvatar()
     {
-        return $this->avatar;
+        if ($this->avatar)
+         {
+            $data = stream_get_contents($this->avatar);
+             if (!$this->avatar){
+                fclose($this->avatar);
+             }
+             return base64_encode($data );
+        }else {
+            return null;
+        }
 
     }
-
     public function setAvatar($avatar): self
     {
         $this->avatar = $avatar;
@@ -258,6 +292,33 @@ class User implements UserInterface
     public function setIsDeleted(?bool $isDeleted): self
     {
         $this->isDeleted = $isDeleted;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Promos[]
+     */
+    public function getPromos(): Collection
+    {
+        return $this->promos;
+    }
+
+    public function addPromo(Promos $promo): self
+    {
+        if (!$this->promos->contains($promo)) {
+            $this->promos[] = $promo;
+            $promo->addUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removePromo(Promos $promo): self
+    {
+        if ($this->promos->removeElement($promo)) {
+            $promo->removeUser($this);
+        }
 
         return $this;
     }

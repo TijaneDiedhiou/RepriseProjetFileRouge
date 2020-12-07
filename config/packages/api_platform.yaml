@@ -8,5 +8,5 @@ api_platform:
         # api/config/packages/api_platform.yaml
     collection:
         pagination:
-            items_per_page: 30 # Default value
+            items_per_page: 3 # Default value
 
