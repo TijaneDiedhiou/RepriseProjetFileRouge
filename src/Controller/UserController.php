@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Service\UserServices;
 use App\Repository\UserRepository;
+use App\Repository\ProfilRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -24,8 +25,8 @@ class UserController extends AbstractController
      *      
      * )
      */
-    public function addUser(Request $request,UserServices $UserServices, EntityManagerInterface $manager ){
-        $user = $UserServices->addUser($request);
+    public function addUser(Request $request,UserServices $UserServices, EntityManagerInterface $manager, ProfilRepository $profilRepo ){
+        $user = $UserServices->addUser($request,$profilRepo );
         $manager->persist($user);
         $manager ->flush();
         return $this->json($user,Response::HTTP_CREATED);

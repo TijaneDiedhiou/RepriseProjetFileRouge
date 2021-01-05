@@ -11,6 +11,8 @@
         "doctrine/doctrine-bundle": "^2.2",
         "doctrine/doctrine-migrations-bundle": "^3.0",
         "doctrine/orm": "^2.7",
+        "friendsofsymfony/rest-bundle": "^3.0",
+        "jms/serializer-bundle": "^3.7",
         "lexik/jwt-authentication-bundle": "^2.10",
         "nelmio/cors-bundle": "^2.1",
         "phpdocumentor/reflection-docblock": "^5.2",
